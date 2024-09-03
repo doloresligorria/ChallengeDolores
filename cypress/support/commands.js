@@ -1,59 +1,43 @@
-// ***********************************************
-// This example commands.js shows you how to
-// create various custom commands and overwrite
-// existing commands.
-//
-// For more comprehensive examples of custom
-// commands please read more here:
-// https://on.cypress.io/custom-commands
-// ***********************************************
-//
-//
-// -- This is a parent command --
-// Cypress.Commands.add('login', (email, password) => { ... })
-//
-//
-// -- This is a child command --
-// Cypress.Commands.add('drag', { prevSubject: 'element'}, (subject, options) => { ... })
-//
-//
-// -- This is a dual command --
-// Cypress.Commands.add('dismiss', { prevSubject: 'optional'}, (subject, options) => { ... })
-//
-//
-// -- This will overwrite an existing command --
-// Cypress.Commands.overwrite('visit', (originalFn, url, options) => { ... })
 
-Cypress.Commands.add('submitEmptyForm', () => {
-    cy.get('#submitContact').click();
-    cy.get('.alert').should('be.visible');
+//Loguo
+Cypress.Commands.add('login', (username, password) => {
+    cy.get('[data-test="username"]').type(username);
+    cy.get('[data-test="password"]').type(password);
+    cy.get('[data-test="login-button"]').click();
+    cy.url().should('include', '/inventory.html');
+    cy.get('.error-message-container').should('not.exist'); //no mensaje, usuario correcto; mensaje, usuario incorrecto
 });
 
-Cypress.Commands.add('fillContactForm', (name, email, phone, subject, message) => {
-    cy.get('input[placeholder="Name"]').type(name);
-    cy.get('input[placeholder="Email"]').type(email);
-    cy.get('input[placeholder="Phone"]').type(phone);
-    cy.get('input[placeholder="Subject"]').type(subject);
-    cy.get('[data-testid="ContactDescription"]').type(message);
+//Add producto
+Cypress.Commands.add('addProduct', (item) => {
+    cy.get(`[data-test="add-to-cart-${item}"]`).click();
+    cy.get(`[data-test="remove-${item}"]`).should('be.visible');
 });
 
-Cypress.Commands.add('verifyErrorMessages', (messages) => {
-    messages.forEach(msg => {
-        cy.get('p').contains(msg);
+//Completar form
+Cypress.Commands.add('completeform', (firstName, lastName, postalCode) => {
+    cy.get('[data-test="shopping-cart-link"]').click();
+    cy.get('[data-test="checkout"]').click();
+    cy.get('[data-test="firstName"]').type(firstName);
+    cy.get('[data-test="lastName"]').type(lastName);
+    cy.get('[data-test="postalCode"]').type(postalCode);
+    cy.get('[data-test="continue"]').click();
+
+    //error en formulario (pasa usuario problem_user)
+    cy.get('body').then($body => {
+        if ($body.find('[data-test="error-button"]').length > 0) {
+            // Si existe, se valida el mensaje de error
+            cy.get('[data-test="error-button"]').should('be.visible');
+            throw new Error('Formulario incompleto o erróneo');
+        } 
     });
 });
 
-//info hosp
-Cypress.Commands.add('verifyHotelInfo', () => {
-    cy.get('h1').contains('Shady Meadows B&B');
-    cy.get('address').contains('The Old Farmhouse, Shady Street, Newfordburyshire, NE1 4105');
-    cy.get('p').contains('01234567891');
-});
+//salir del form; logout
+Cypress.Commands.add('logout', () => {
+    cy.get('[data-test="finish"]').click();
+    cy.get('[data-test="back-to-products"]').click();
+    cy.contains('Open Menu').click();
+    cy.get('[data-test="logout-sidebar-link"]').click();
 
-Cypress.Commands.add('verifyHotelDescription', (description) => {
-    cy.get('p').contains(description);
-});
-
-Cypress.Commands.add('verifyImagesPresent', () => {
-    cy.get('img').should('be.visible');
 });
